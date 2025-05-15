@@ -1,0 +1,38 @@
+name: Sync Master to Sync Branch
+
+on:
+#  push:
+#    branches:
+#      - master
+  workflow_dispatch:  # Allows manual triggering of the workflow
+
+jobs:
+  sync_branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Git
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+
+      - name: Fetch Sync Branch
+        run: git fetch origin sync
+
+      - name: Rebase Sync with Master
+        run: |
+          git checkout sync
+          # Use the 'theirs' strategy to prefer changes from master in case of conflicts
+          git rebase -X theirs master
+          if git diff --quiet; then
+            echo "No conflicts during rebase."
+          else
+            echo "Conflicts detected and resolved in favor of master."
+          fi
+
+      - name: Push to Sync
+        run: git push origin sync
